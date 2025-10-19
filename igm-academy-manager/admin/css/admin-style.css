@@ -1,0 +1,179 @@
+/**
+ * Admin CSS
+ *
+ * @package    IGM_Academy
+ * @subpackage IGM_Academy/admin/css
+ */
+
+/* Dashboard Stats Grid */
+.igm-stats-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+    gap: 20px;
+    margin: 20px 0;
+}
+
+.igm-stat-card {
+    background: #fff;
+    border: 1px solid #ccd0d4;
+    border-radius: 4px;
+    padding: 20px;
+    position: relative;
+    transition: box-shadow 0.3s ease;
+}
+
+.igm-stat-card:hover {
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.igm-stat-icon {
+    font-size: 48px;
+    color: #2271b1;
+    opacity: 0.2;
+    position: absolute;
+    top: 20px;
+    right: 20px;
+}
+
+.igm-stat-content h3 {
+    margin: 0;
+    font-size: 36px;
+    color: #1d2327;
+}
+
+.igm-stat-content p {
+    margin: 5px 0 0;
+    color: #646970;
+    font-size: 14px;
+}
+
+.igm-stat-link {
+    display: block;
+    margin-top: 15px;
+    color: #2271b1;
+    text-decoration: none;
+    font-size: 13px;
+}
+
+.igm-stat-link:hover {
+    color: #135e96;
+}
+
+/* Quick Links */
+.igm-quick-links {
+    background: #fff;
+    border: 1px solid #ccd0d4;
+    border-radius: 4px;
+    padding: 20px;
+    margin: 20px 0;
+}
+
+.igm-quick-links h2 {
+    margin-top: 0;
+}
+
+.igm-links-grid {
+    display: flex;
+    gap: 10px;
+    flex-wrap: wrap;
+}
+
+/* Info Box */
+.igm-info-box {
+    background: #f0f6fc;
+    border: 1px solid #c3d8ed;
+    border-radius: 4px;
+    padding: 20px;
+    margin: 20px 0;
+}
+
+.igm-info-box h3 {
+    margin-top: 0;
+    color: #135e96;
+}
+
+.igm-info-box ul {
+    margin: 10px 0;
+    padding-left: 20px;
+}
+
+.igm-info-box li {
+    margin: 5px 0;
+}
+
+/* Students List */
+.igm-total-count {
+    color: #646970;
+    font-size: 14px;
+    margin: 10px 0;
+}
+
+.required {
+    color: #d63638;
+}
+
+/* Import Page */
+.igm-import-container {
+    max-width: 900px;
+}
+
+.igm-import-section {
+    background: #fff;
+    border: 1px solid #ccd0d4;
+    border-radius: 4px;
+    padding: 20px;
+    margin: 20px 0;
+}
+
+.igm-import-section h2 {
+    margin-top: 0;
+}
+
+.igm-import-info {
+    background: #fff9e6;
+    border: 1px solid #f0e68c;
+    border-radius: 4px;
+    padding: 20px;
+    margin: 20px 0;
+}
+
+.igm-import-info h3 {
+    margin-top: 0;
+    color: #8a6d3b;
+}
+
+.igm-import-info ul {
+    margin: 10px 0;
+    padding-left: 20px;
+}
+
+/* Responsive */
+@media (max-width: 782px) {
+    .igm-stats-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .igm-stat-icon {
+        font-size: 36px;
+    }
+
+    .igm-stat-content h3 {
+        font-size: 28px;
+    }
+}
+
+/* Table improvements */
+.wp-list-table .button-small {
+    padding: 2px 8px;
+    font-size: 12px;
+    height: auto;
+    line-height: 1.5;
+}
+
+.wp-list-table .button-link-delete {
+    color: #b32d2e;
+}
+
+.wp-list-table .button-link-delete:hover {
+    color: #8a2424;
+}
