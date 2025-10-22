@@ -17,6 +17,8 @@ if ( ! defined( 'WPINC' ) ) {
     die;
 }
 
+ob_start();
+
 define( 'IGM_ACADEMY_VERSION', '1.0.0' );
 define( 'IGM_ACADEMY_PLUGIN_DIR', plugin_dir_path( __FILE__ ) );
 define( 'IGM_ACADEMY_PLUGIN_URL', plugin_dir_url( __FILE__ ) );

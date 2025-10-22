@@ -90,14 +90,35 @@ class IGM_Academy_Importer {
                 // Parse Spanish date format (e.g., "10 de July de 1976")
                 $birth_date = self::parse_spanish_date( $birth_date_str );
 
+                // Validate email
+                if ( empty( $email ) || ! is_email( $email ) ) {
+                    $errors[] = sprintf(
+                        __( 'Invalid email for: %s %s', 'igm-academy-manager' ),
+                        $first_name,
+                        $last_name
+                    );
+                    continue;
+                }
+
                 // Check if student already exists
-                $existing = $wpdb->get_var( $wpdb->prepare(
-                    "SELECT id FROM $table_name WHERE email = %s",
+                $existing_student = $wpdb->get_row( $wpdb->prepare(
+                    "SELECT id, user_id FROM $table_name WHERE email = %s",
                     $email
                 ) );
 
-                if ( $existing ) {
+                if ( $existing_student ) {
                     // Update existing student
+                    $user_id = $existing_student->user_id;
+
+                    // Update WordPress user
+                    wp_update_user( array(
+                        'ID'           => $user_id,
+                        'display_name' => $first_name . ' ' . $last_name,
+                        'first_name'   => $first_name,
+                        'last_name'    => $last_name,
+                    ) );
+
+                    // Update student record
                     $wpdb->update(
                         $table_name,
                         array(
@@ -110,16 +131,55 @@ class IGM_Academy_Importer {
                             'total_classes'   => $total_classes,
                             'pending_classes' => $pending_classes,
                         ),
-                        array( 'id' => $existing ),
+                        array( 'id' => $existing_student->id ),
                         array( '%s', '%s', '%s', '%s', '%s', '%s', '%d', '%d' ),
                         array( '%d' )
                     );
                     $imported++;
                 } else {
-                    // Insert new student
+                    // Create new student with WordPress user
+                    $username = 'student_' . sanitize_user( $email );
+                    $password = wp_generate_password( 12, true, true );
+
+                    // Check if username exists, add number if needed
+                    $base_username = $username;
+                    $counter = 1;
+                    while ( username_exists( $username ) ) {
+                        $username = $base_username . '_' . $counter;
+                        $counter++;
+                    }
+
+                    // Create WordPress user
+                    $user_id = wp_create_user( $username, $password, $email );
+
+                    if ( is_wp_error( $user_id ) ) {
+                        $errors[] = sprintf(
+                            __( 'Failed to create user for: %s %s (%s) - %s', 'igm-academy-manager' ),
+                            $first_name,
+                            $last_name,
+                            $email,
+                            $user_id->get_error_message()
+                        );
+                        continue;
+                    }
+
+                    // Set user role
+                    $user = new WP_User( $user_id );
+                    $user->set_role( 'igm_student' );
+
+                    // Set user meta
+                    wp_update_user( array(
+                        'ID'           => $user_id,
+                        'display_name' => $first_name . ' ' . $last_name,
+                        'first_name'   => $first_name,
+                        'last_name'    => $last_name,
+                    ) );
+
+                    // Insert student record
                     $result = $wpdb->insert(
                         $table_name,
                         array(
+                            'user_id'         => $user_id,
                             'first_name'      => $first_name,
                             'last_name'       => $last_name,
                             'email'           => $email,
@@ -130,18 +190,22 @@ class IGM_Academy_Importer {
                             'total_classes'   => $total_classes,
                             'pending_classes' => $pending_classes,
                         ),
-                        array( '%s', '%s', '%s', '%s', '%s', '%s', '%s', '%d', '%d' )
+                        array( '%d', '%s', '%s', '%s', '%s', '%s', '%s', '%s', '%d', '%d' )
                     );
 
                     if ( $result ) {
                         $imported++;
+                        // Send notification email with login credentials
+                        wp_new_user_notification( $user_id, null, 'both' );
                     } else {
                         $errors[] = sprintf(
-                            __( 'Failed to import: %s %s (%s)', 'igm-academy-manager' ),
+                            __( 'Failed to insert student record: %s %s (%s)', 'igm-academy-manager' ),
                             $first_name,
                             $last_name,
                             $email
                         );
+                        // Cleanup: delete the WordPress user if student record insertion failed
+                        wp_delete_user( $user_id );
                     }
                 }
             }

@@ -58,10 +58,38 @@ class IGM_Academy_Admin {
      * @since    1.0.0
      */
     public function enqueue_styles() {
+        // Bootstrap 5 CSS from CDN
+        wp_enqueue_style(
+            'bootstrap',
+            'https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css',
+            array(),
+            '5.3.2',
+            'all'
+        );
+
+        // Bootstrap Icons
+        wp_enqueue_style(
+            'bootstrap-icons',
+            'https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css',
+            array(),
+            '1.11.3',
+            'all'
+        );
+
+        // DataTables CSS for advanced table features
+        wp_enqueue_style(
+            'datatables',
+            'https://cdn.datatables.net/1.13.7/css/dataTables.bootstrap5.min.css',
+            array( 'bootstrap' ),
+            '1.13.7',
+            'all'
+        );
+
+        // Custom admin styles (for IGM-specific overrides)
         wp_enqueue_style(
             $this->plugin_name,
             IGM_ACADEMY_PLUGIN_URL . 'admin/css/admin-style.css',
-            array(),
+            array( 'bootstrap', 'bootstrap-icons', 'datatables' ),
             $this->version,
             'all'
         );
@@ -73,12 +101,49 @@ class IGM_Academy_Admin {
      * @since    1.0.0
      */
     public function enqueue_scripts() {
+        // Bootstrap 5 JS Bundle (includes Popper.js)
+        wp_enqueue_script(
+            'bootstrap-bundle',
+            'https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js',
+            array( 'jquery' ),
+            '5.3.2',
+            true
+        );
+
+        // DataTables JS for advanced table features
+        wp_enqueue_script(
+            'datatables',
+            'https://cdn.datatables.net/1.13.7/js/jquery.dataTables.min.js',
+            array( 'jquery' ),
+            '1.13.7',
+            true
+        );
+
+        wp_enqueue_script(
+            'datatables-bootstrap',
+            'https://cdn.datatables.net/1.13.7/js/dataTables.bootstrap5.min.js',
+            array( 'jquery', 'datatables', 'bootstrap-bundle' ),
+            '1.13.7',
+            true
+        );
+
+        // Custom admin scripts
         wp_enqueue_script(
             $this->plugin_name,
             IGM_ACADEMY_PLUGIN_URL . 'admin/js/admin-script.js',
-            array( 'jquery' ),
+            array( 'jquery', 'bootstrap-bundle', 'datatables', 'datatables-bootstrap' ),
             $this->version,
-            false
+            true
+        );
+
+        // Localize script for AJAX
+        wp_localize_script(
+            $this->plugin_name,
+            'igmAcademy',
+            array(
+                'ajaxUrl' => admin_url( 'admin-ajax.php' ),
+                'nonce'   => wp_create_nonce( 'igm_academy_nonce' ),
+            )
         );
     }
 

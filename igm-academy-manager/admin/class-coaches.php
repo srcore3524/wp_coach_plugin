@@ -114,9 +114,81 @@ class IGM_Academy_Coaches {
         $email = sanitize_email( $_POST['email'] );
         $phone = sanitize_text_field( $_POST['phone'] );
         $specialty = sanitize_text_field( $_POST['specialty'] );
-        $user_id = isset( $_POST['user_id'] ) ? intval( $_POST['user_id'] ) : null;
 
+        // Check if email already exists in another coach record
+        if ( $coach_id > 0 ) {
+            $existing = $wpdb->get_var( $wpdb->prepare(
+                "SELECT id FROM {$wpdb->prefix}igm_coaches WHERE email = %s AND id != %d",
+                $email,
+                $coach_id
+            ) );
+        } else {
+            $existing = $wpdb->get_var( $wpdb->prepare(
+                "SELECT id FROM {$wpdb->prefix}igm_coaches WHERE email = %s",
+                $email
+            ) );
+        }
+
+        if ( $existing ) {
+            wp_die( __( 'Error: A coach with this email already exists.', 'igm-academy-manager' ) );
+        }
+
+        // Handle WordPress user creation/update
+        if ( $coach_id > 0 ) {
+            // Editing existing coach - get current user_id
+            $current_coach = $wpdb->get_row( $wpdb->prepare(
+                "SELECT user_id FROM {$wpdb->prefix}igm_coaches WHERE id = %d",
+                $coach_id
+            ) );
+            $user_id = $current_coach->user_id;
+
+            // Update WordPress user info
+            wp_update_user( array(
+                'ID'           => $user_id,
+                'user_email'   => $email,
+                'display_name' => $first_name . ' ' . $last_name,
+                'first_name'   => $first_name,
+                'last_name'    => $last_name,
+            ) );
+
+        } else {
+            // Creating new coach - create WordPress user
+            $username = 'coach_' . sanitize_user( $email );
+            $password = wp_generate_password( 12, true, true );
+
+            // Check if username exists, add number if needed
+            $base_username = $username;
+            $counter = 1;
+            while ( username_exists( $username ) ) {
+                $username = $base_username . '_' . $counter;
+                $counter++;
+            }
+
+            $user_id = wp_create_user( $username, $password, $email );
+
+            if ( is_wp_error( $user_id ) ) {
+                wp_die( __( 'Error creating WordPress user: ', 'igm-academy-manager' ) . $user_id->get_error_message() );
+            }
+
+            // Set user role
+            $user = new WP_User( $user_id );
+            $user->set_role( 'igm_coach' );
+
+            // Set user meta
+            wp_update_user( array(
+                'ID'           => $user_id,
+                'display_name' => $first_name . ' ' . $last_name,
+                'first_name'   => $first_name,
+                'last_name'    => $last_name,
+            ) );
+
+            // Send notification email with login credentials
+            wp_new_user_notification( $user_id, null, 'both' );
+        }
+
+        // Prepare coach data
         $data = array(
+            'user_id'    => $user_id,
             'first_name' => $first_name,
             'last_name'  => $last_name,
             'email'      => $email,
@@ -124,77 +196,19 @@ class IGM_Academy_Coaches {
             'specialty'  => $specialty,
         );
 
-        $format = array( '%s', '%s', '%s', '%s', '%s' );
+        $format = array( '%d', '%s', '%s', '%s', '%s', '%s' );
 
         if ( $coach_id > 0 ) {
             // Update existing coach
-            if ( $user_id ) {
-                $data['user_id'] = $user_id;
-                $format[] = '%d';
-            }
             $wpdb->update( $table_name, $data, array( 'id' => $coach_id ), $format, array( '%d' ) );
-            $message = __( 'Coach updated successfully.', 'igm-academy-manager' );
         } else {
             // Insert new coach
-            // Optionally create WordPress user if requested
-            if ( isset( $_POST['create_wp_user'] ) && $_POST['create_wp_user'] === 'yes' ) {
-                $user_id = self::create_wordpress_user( $email, $first_name, $last_name );
-                if ( $user_id ) {
-                    $data['user_id'] = $user_id;
-                    $format[] = '%d';
-                }
-            }
-
             $wpdb->insert( $table_name, $data, $format );
-            $message = __( 'Coach added successfully.', 'igm-academy-manager' );
         }
 
         // Redirect with success message
         wp_redirect( add_query_arg( array( 'page' => 'igm-coaches', 'message' => 'success' ), admin_url( 'admin.php' ) ) );
         exit;
-    }
-
-    /**
-     * Create WordPress user for coach
-     *
-     * @since    1.0.0
-     * @param    string    $email       Email address
-     * @param    string    $first_name  First name
-     * @param    string    $last_name   Last name
-     * @return   int|null  User ID or null on failure
-     */
-    private static function create_wordpress_user( $email, $first_name, $last_name ) {
-        // Check if user already exists
-        if ( email_exists( $email ) ) {
-            return get_user_by( 'email', $email )->ID;
-        }
-
-        // Generate random password
-        $password = wp_generate_password( 12, true, true );
-
-        // Create user
-        $user_id = wp_create_user( $email, $password, $email );
-
-        if ( is_wp_error( $user_id ) ) {
-            return null;
-        }
-
-        // Update user meta
-        wp_update_user( array(
-            'ID'           => $user_id,
-            'first_name'   => $first_name,
-            'last_name'    => $last_name,
-            'display_name' => $first_name . ' ' . $last_name,
-        ) );
-
-        // Set user role to coach
-        $user = new WP_User( $user_id );
-        $user->set_role( 'igm_coach' );
-
-        // Send password reset email
-        wp_send_new_user_notifications( $user_id, 'both' );
-
-        return $user_id;
     }
 
     /**
@@ -223,6 +237,19 @@ class IGM_Academy_Coaches {
             exit;
         }
 
+        // Get coach's user_id before deletion
+        $coach = $wpdb->get_row( $wpdb->prepare(
+            "SELECT user_id FROM {$wpdb->prefix}igm_coaches WHERE id = %d",
+            $coach_id
+        ) );
+
+        if ( $coach && $coach->user_id ) {
+            // Delete WordPress user (this will also delete user meta)
+            require_once( ABSPATH . 'wp-admin/includes/user.php' );
+            wp_delete_user( $coach->user_id );
+        }
+
+        // Delete coach record
         $wpdb->delete( $table_name, array( 'id' => $coach_id ), array( '%d' ) );
 
         wp_redirect( add_query_arg( array( 'page' => 'igm-coaches', 'message' => 'deleted' ), admin_url( 'admin.php' ) ) );

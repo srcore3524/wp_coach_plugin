@@ -1,179 +1,292 @@
 /**
- * Admin CSS
+ * IGM Academy Manager - Custom Admin Styles
+ * Works with Bootstrap 5 + DataTables
  *
  * @package    IGM_Academy
  * @subpackage IGM_Academy/admin/css
+ * @version    1.0.0
  */
 
-/* Dashboard Stats Grid */
-.igm-stats-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-    gap: 20px;
-    margin: 20px 0;
+/* ========================================
+   Custom Theme Colors
+   ======================================== */
+:root {
+    --igm-primary: #4f46e5;
+    --igm-primary-hover: #4338ca;
+    --igm-secondary: #10b981;
+    --igm-danger: #ef4444;
 }
 
-.igm-stat-card {
-    background: #fff;
-    border: 1px solid #ccd0d4;
-    border-radius: 4px;
-    padding: 20px;
-    position: relative;
-    transition: box-shadow 0.3s ease;
+/* ========================================
+   WordPress Admin Wrapper Fixes
+   ======================================== */
+.wrap {
+    margin: 20px 20px 0 2px;
 }
 
-.igm-stat-card:hover {
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+.wrap > h1,
+.wrap > h2 {
+    display: none; /* Hide default WordPress headings, we'll use Bootstrap */
 }
 
-.igm-stat-icon {
-    font-size: 48px;
-    color: #2271b1;
-    opacity: 0.2;
-    position: absolute;
-    top: 20px;
-    right: 20px;
+/* ========================================
+   IGM Custom Page Header
+   ======================================== */
+.igm-page-header {
+    background: linear-gradient(135deg, var(--igm-primary) 0%, var(--igm-primary-hover) 100%);
+    border-radius: 12px;
+    padding: 32px;
+    margin-bottom: 24px;
+    color: white;
+    box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
 }
 
-.igm-stat-content h3 {
+.igm-page-header h1 {
     margin: 0;
-    font-size: 36px;
-    color: #1d2327;
+    font-size: 28px;
+    font-weight: 700;
+    color: white;
 }
 
-.igm-stat-content p {
-    margin: 5px 0 0;
-    color: #646970;
+.igm-page-header p {
+    margin: 8px 0 0;
     font-size: 14px;
+    opacity: 0.95;
 }
 
-.igm-stat-link {
-    display: block;
-    margin-top: 15px;
-    color: #2271b1;
-    text-decoration: none;
-    font-size: 13px;
+/* ========================================
+   DataTables Bootstrap 5 Customization
+   ======================================== */
+.dataTables_wrapper {
+    padding: 0;
 }
 
-.igm-stat-link:hover {
-    color: #135e96;
+.dataTables_filter input {
+    margin-left: 0.5em;
+    border-radius: 6px;
 }
 
-/* Quick Links */
-.igm-quick-links {
-    background: #fff;
-    border: 1px solid #ccd0d4;
-    border-radius: 4px;
-    padding: 20px;
-    margin: 20px 0;
+.dataTables_length select {
+    border-radius: 6px;
 }
 
-.igm-quick-links h2 {
-    margin-top: 0;
+table.dataTable thead th {
+    font-weight: 600;
+    background-color: #f8f9fa;
+    border-bottom: 2px solid #dee2e6;
 }
 
-.igm-links-grid {
-    display: flex;
-    gap: 10px;
-    flex-wrap: wrap;
+table.dataTable tbody tr:hover {
+    background-color: #f8f9fa;
 }
 
-/* Info Box */
-.igm-info-box {
-    background: #f0f6fc;
-    border: 1px solid #c3d8ed;
-    border-radius: 4px;
-    padding: 20px;
-    margin: 20px 0;
+/* ========================================
+   Badge Styles
+   ======================================== */
+.badge {
+    font-weight: 500;
+    padding: 0.35em 0.65em;
 }
 
-.igm-info-box h3 {
-    margin-top: 0;
-    color: #135e96;
+.badge.bg-primary {
+    background-color: var(--igm-primary) !important;
 }
 
-.igm-info-box ul {
-    margin: 10px 0;
-    padding-left: 20px;
+.badge.bg-success {
+    background-color: var(--igm-secondary) !important;
 }
 
-.igm-info-box li {
-    margin: 5px 0;
+/* ========================================
+   Button Customization
+   ======================================== */
+.btn-primary {
+    background-color: var(--igm-primary);
+    border-color: var(--igm-primary);
 }
 
-/* Students List */
-.igm-total-count {
-    color: #646970;
-    font-size: 14px;
-    margin: 10px 0;
+.btn-primary:hover,
+.btn-primary:focus {
+    background-color: var(--igm-primary-hover);
+    border-color: var(--igm-primary-hover);
 }
 
+.btn-success {
+    background-color: var(--igm-secondary);
+    border-color: var(--igm-secondary);
+}
+
+/* ========================================
+   Card Improvements
+   ======================================== */
+.card {
+    border-radius: 12px;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+    border: 1px solid #e5e7eb;
+}
+
+.card-header {
+    background-color: #f8f9fa;
+    border-bottom: 1px solid #e5e7eb;
+    font-weight: 600;
+    border-radius: 12px 12px 0 0 !important;
+}
+
+/* ========================================
+   Stats Cards for Dashboard
+   ======================================== */
+.stats-card {
+    border-left: 4px solid var(--igm-primary);
+    transition: all 0.3s ease;
+}
+
+.stats-card:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 10px 20px rgba(0, 0, 0, 0.1);
+}
+
+.stats-card.stats-students {
+    border-left-color: #4f46e5;
+}
+
+.stats-card.stats-coaches {
+    border-left-color: #10b981;
+}
+
+.stats-card.stats-groups {
+    border-left-color: #f59e0b;
+}
+
+.stats-card.stats-payments {
+    border-left-color: #3b82f6;
+}
+
+.stats-number {
+    font-size: 2.5rem;
+    font-weight: 700;
+    line-height: 1;
+}
+
+.stats-label {
+    font-size: 0.875rem;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    color: #6b7280;
+    font-weight: 500;
+}
+
+/* ========================================
+   Form Improvements
+   ======================================== */
+.form-label {
+    font-weight: 500;
+    margin-bottom: 0.5rem;
+}
+
+.form-control:focus,
+.form-select:focus {
+    border-color: var(--igm-primary);
+    box-shadow: 0 0 0 0.2rem rgba(79, 70, 229, 0.25);
+}
+
+/* Required field indicator */
 .required {
-    color: #d63638;
+    color: #ef4444;
 }
 
-/* Import Page */
-.igm-import-container {
-    max-width: 900px;
+/* ========================================
+   Alert Customization
+   ======================================== */
+.alert {
+    border-radius: 8px;
+    border-left: 4px solid;
 }
 
-.igm-import-section {
-    background: #fff;
-    border: 1px solid #ccd0d4;
-    border-radius: 4px;
-    padding: 20px;
-    margin: 20px 0;
+.alert-success {
+    border-left-color: var(--igm-secondary);
 }
 
-.igm-import-section h2 {
-    margin-top: 0;
+.alert-danger {
+    border-left-color: var(--igm-danger);
 }
 
-.igm-import-info {
-    background: #fff9e6;
+.alert-info {
+    border-left-color: #3b82f6;
+}
+
+/* ========================================
+   Responsive Utilities
+   ======================================== */
+@media (max-width: 768px) {
+    .igm-page-header {
+        padding: 20px;
+    }
+
+    .igm-page-header h1 {
+        font-size: 24px;
+    }
+
+    .stats-number {
+        font-size: 2rem;
+    }
+}
+
+/* ========================================
+   Loading Spinner
+   ======================================== */
+.igm-loading {
+    text-align: center;
+    padding: 40px;
+}
+
+.igm-loading .spinner-border {
+    width: 3rem;
+    height: 3rem;
+    color: var(--igm-primary);
+}
+
+/* ========================================
+   Import Page Specific
+   ======================================== */
+.import-instructions {
+    background-color: #fff9e6;
     border: 1px solid #f0e68c;
-    border-radius: 4px;
+    border-radius: 8px;
     padding: 20px;
-    margin: 20px 0;
 }
 
-.igm-import-info h3 {
-    margin-top: 0;
+.import-instructions h5 {
     color: #8a6d3b;
+    margin-top: 0;
 }
 
-.igm-import-info ul {
-    margin: 10px 0;
-    padding-left: 20px;
+/* ========================================
+   Table Action Buttons
+   ======================================== */
+.table-actions {
+    white-space: nowrap;
 }
 
-/* Responsive */
-@media (max-width: 782px) {
-    .igm-stats-grid {
-        grid-template-columns: 1fr;
-    }
-
-    .igm-stat-icon {
-        font-size: 36px;
-    }
-
-    .igm-stat-content h3 {
-        font-size: 28px;
-    }
+.table-actions .btn {
+    padding: 0.25rem 0.5rem;
+    font-size: 0.875rem;
 }
 
-/* Table improvements */
-.wp-list-table .button-small {
-    padding: 2px 8px;
-    font-size: 12px;
-    height: auto;
-    line-height: 1.5;
+/* ========================================
+   WordPress Notices Override
+   ======================================== */
+.notice {
+    border-left: 4px solid #72aee6;
+    border-radius: 4px;
+    margin: 16px 0;
+    padding: 12px;
 }
 
-.wp-list-table .button-link-delete {
-    color: #b32d2e;
+.notice-success {
+    border-left-color: var(--igm-secondary);
+    background-color: #d1fae5;
 }
 
-.wp-list-table .button-link-delete:hover {
-    color: #8a2424;
+.notice-error {
+    border-left-color: var(--igm-danger);
+    background-color: #fee2e2;
 }

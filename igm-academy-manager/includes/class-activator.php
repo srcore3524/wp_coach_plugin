@@ -41,7 +41,7 @@ class IGM_Academy_Activator {
         $table_students = $wpdb->prefix . 'igm_students';
         $sql_students = "CREATE TABLE $table_students (
             id bigint(20) NOT NULL AUTO_INCREMENT,
-            user_id bigint(20) DEFAULT NULL,
+            user_id bigint(20) NOT NULL,
             first_name varchar(100) NOT NULL,
             last_name varchar(100) NOT NULL,
             email varchar(100) NOT NULL,
@@ -54,8 +54,8 @@ class IGM_Academy_Activator {
             created_at datetime DEFAULT CURRENT_TIMESTAMP,
             updated_at datetime DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
             PRIMARY KEY  (id),
-            KEY user_id (user_id),
-            KEY email (email)
+            UNIQUE KEY user_id (user_id),
+            UNIQUE KEY email (email)
         ) $charset_collate;";
         dbDelta( $sql_students );
 
@@ -72,8 +72,8 @@ class IGM_Academy_Activator {
             created_at datetime DEFAULT CURRENT_TIMESTAMP,
             updated_at datetime DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
             PRIMARY KEY  (id),
-            KEY user_id (user_id),
-            KEY email (email)
+            UNIQUE KEY user_id (user_id),
+            UNIQUE KEY email (email)
         ) $charset_collate;";
         dbDelta( $sql_coaches );
 
@@ -119,6 +119,10 @@ class IGM_Academy_Activator {
             description text DEFAULT NULL,
             duration int(11) DEFAULT NULL,
             difficulty enum('beginner','intermediate','advanced') DEFAULT 'intermediate',
+            technical_objective text DEFAULT NULL,
+            tactical_objective text DEFAULT NULL,
+            physical_objective text DEFAULT NULL,
+            mental_objective text DEFAULT NULL,
             created_at datetime DEFAULT CURRENT_TIMESTAMP,
             updated_at datetime DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
             PRIMARY KEY  (id),
