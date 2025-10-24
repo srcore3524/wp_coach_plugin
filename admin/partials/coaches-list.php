@@ -38,7 +38,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 
     <!-- Success/Error Messages -->
     <?php if ( isset( $_GET['message'] ) ) : ?>
-        <?php if ( in_array( $_GET['message'], [ 'created', 'updated', 'success', 'deleted' ] ) ) : ?>
+        <?php if ( in_array( $_GET['message'], [ 'created', 'updated', 'success', 'deleted', 'restored' ] ) ) : ?>
             <div class="alert alert-success alert-dismissible fade show" role="alert">
                 <i class="bi bi-check-circle-fill me-2"></i>
                 <strong><?php _e( 'Success!', 'igm-academy-manager' ); ?></strong>
@@ -49,6 +49,8 @@ if ( ! defined( 'ABSPATH' ) ) {
                     _e( 'Coach updated successfully.', 'igm-academy-manager' );
                 } elseif ( $_GET['message'] === 'deleted' ) {
                     _e( 'Coach deleted successfully.', 'igm-academy-manager' );
+                } elseif ( $_GET['message'] === 'restored' ) {
+                    _e( 'Coach restored successfully.', 'igm-academy-manager' );
                 } else {
                     _e( 'Coach saved successfully.', 'igm-academy-manager' );
                 }
@@ -75,12 +77,35 @@ if ( ! defined( 'ABSPATH' ) ) {
         </div>
     <?php endif; ?>
 
+    <!-- Status Tabs -->
+    <?php
+    $current_status = isset( $_GET['status'] ) ? sanitize_text_field( $_GET['status'] ) : 'active';
+    ?>
+    <ul class="nav nav-tabs mb-3">
+        <li class="nav-item">
+            <a class="nav-link <?php echo $current_status === 'active' ? 'active' : ''; ?>"
+               href="<?php echo admin_url( 'admin.php?page=igm-coaches&status=active' ); ?>">
+                <i class="bi bi-check-circle"></i>
+                <?php _e( 'Active Coaches', 'igm-academy-manager' ); ?>
+                <span class="badge bg-primary ms-1"><?php echo esc_html( $active_count ); ?></span>
+            </a>
+        </li>
+        <li class="nav-item">
+            <a class="nav-link <?php echo $current_status === 'deleted' ? 'active' : ''; ?>"
+               href="<?php echo admin_url( 'admin.php?page=igm-coaches&status=deleted' ); ?>">
+                <i class="bi bi-trash"></i>
+                <?php _e( 'Deleted Coaches', 'igm-academy-manager' ); ?>
+                <span class="badge bg-secondary ms-1"><?php echo esc_html( $deleted_count ); ?></span>
+            </a>
+        </li>
+    </ul>
+
     <!-- Coaches Table Card -->
     <div class="mw-100 card">
         <div class="card-header bg-white d-flex justify-content-between align-items-center">
             <h5 class="mb-0">
                 <i class="bi bi-table"></i>
-                <?php _e( 'All Coaches', 'igm-academy-manager' ); ?>
+                <?php echo $current_status === 'deleted' ? _e( 'Deleted Coaches', 'igm-academy-manager' ) : _e( 'Active Coaches', 'igm-academy-manager' ); ?>
             </h5>
             <?php if ( ! empty( $coaches ) ) : ?>
                 <span class="badge bg-success"><?php echo esc_html( $total_coaches ); ?></span>
@@ -168,25 +193,40 @@ if ( ! defined( 'ABSPATH' ) ) {
                                         ?>
                                     </td>
                                     <td class="table-actions text-center">
-                                        <a href="<?php echo admin_url( 'admin.php?page=igm-coaches&action=edit&coach_id=' . $coach->id ); ?>"
-                                           class="btn btn-sm btn-primary"
-                                           data-bs-toggle="tooltip"
-                                           title="<?php esc_attr_e( 'Edit Coach', 'igm-academy-manager' ); ?>">
-                                            <i class="bi bi-pencil-fill"></i>
-                                            <?php _e( 'Edit', 'igm-academy-manager' ); ?>
-                                        </a>
-                                        <form method="post" style="display: inline;">
-                                            <?php wp_nonce_field( 'igm_coach_action', 'igm_coach_nonce' ); ?>
-                                            <input type="hidden" name="igm_action" value="delete">
-                                            <input type="hidden" name="coach_id" value="<?php echo esc_attr( $coach->id ); ?>">
-                                            <button type="submit"
-                                                    class="btn btn-sm btn-danger delete-confirm"
-                                                    data-bs-toggle="tooltip"
-                                                    title="<?php esc_attr_e( 'Delete Coach', 'igm-academy-manager' ); ?>">
-                                                <i class="bi bi-trash-fill"></i>
-                                                <?php _e( 'Delete', 'igm-academy-manager' ); ?>
-                                            </button>
-                                        </form>
+                                        <?php if ( $current_status === 'active' ) : ?>
+                                            <a href="<?php echo admin_url( 'admin.php?page=igm-coaches&action=edit&coach_id=' . $coach->id ); ?>"
+                                               class="btn btn-sm btn-primary"
+                                               data-bs-toggle="tooltip"
+                                               title="<?php esc_attr_e( 'Edit Coach', 'igm-academy-manager' ); ?>">
+                                                <i class="bi bi-pencil-fill"></i>
+                                                <?php _e( 'Edit', 'igm-academy-manager' ); ?>
+                                            </a>
+                                            <form method="post" style="display: inline;">
+                                                <?php wp_nonce_field( 'igm_coach_action', 'igm_coach_nonce' ); ?>
+                                                <input type="hidden" name="igm_action" value="delete">
+                                                <input type="hidden" name="coach_id" value="<?php echo esc_attr( $coach->id ); ?>">
+                                                <button type="submit"
+                                                        class="btn btn-sm btn-danger delete-confirm"
+                                                        data-bs-toggle="tooltip"
+                                                        title="<?php esc_attr_e( 'Delete Coach', 'igm-academy-manager' ); ?>">
+                                                    <i class="bi bi-trash-fill"></i>
+                                                    <?php _e( 'Delete', 'igm-academy-manager' ); ?>
+                                                </button>
+                                            </form>
+                                        <?php else : ?>
+                                            <form method="post" style="display: inline;">
+                                                <?php wp_nonce_field( 'igm_coach_action', 'igm_coach_nonce' ); ?>
+                                                <input type="hidden" name="igm_action" value="restore">
+                                                <input type="hidden" name="coach_id" value="<?php echo esc_attr( $coach->id ); ?>">
+                                                <button type="submit"
+                                                        class="btn btn-sm btn-success"
+                                                        data-bs-toggle="tooltip"
+                                                        title="<?php esc_attr_e( 'Restore Coach', 'igm-academy-manager' ); ?>">
+                                                    <i class="bi bi-arrow-counterclockwise"></i>
+                                                    <?php _e( 'Restore', 'igm-academy-manager' ); ?>
+                                                </button>
+                                            </form>
+                                        <?php endif; ?>
                                     </td>
                                 </tr>
                             <?php endforeach; ?>

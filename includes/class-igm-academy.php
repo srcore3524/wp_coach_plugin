@@ -69,6 +69,11 @@ class IGM_Academy {
         require_once IGM_ACADEMY_PLUGIN_DIR . 'includes/class-i18n.php';
 
         /**
+         * The class responsible for role and capability management.
+         */
+        require_once IGM_ACADEMY_PLUGIN_DIR . 'includes/class-capabilities.php';
+
+        /**
          * The class responsible for defining all actions that occur in the admin area.
          */
         require_once IGM_ACADEMY_PLUGIN_DIR . 'admin/class-admin.php';
@@ -104,6 +109,9 @@ class IGM_Academy {
         $this->loader->add_action( 'admin_enqueue_scripts', $plugin_admin, 'enqueue_styles' );
         $this->loader->add_action( 'admin_enqueue_scripts', $plugin_admin, 'enqueue_scripts' );
         $this->loader->add_action( 'admin_menu', $plugin_admin, 'add_admin_menu' );
+
+        // Register login redirect
+        $this->loader->add_filter( 'login_redirect', 'IGM_Academy_Capabilities', 'login_redirect', 10, 3 );
     }
 
     /**

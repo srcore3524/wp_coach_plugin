@@ -49,6 +49,7 @@ class IGM_Academy_Admin {
     private function load_admin_classes() {
         require_once IGM_ACADEMY_PLUGIN_DIR . 'admin/class-students.php';
         require_once IGM_ACADEMY_PLUGIN_DIR . 'admin/class-coaches.php';
+        require_once IGM_ACADEMY_PLUGIN_DIR . 'admin/class-groups.php';
         require_once IGM_ACADEMY_PLUGIN_DIR . 'admin/class-importer.php';
     }
 
@@ -192,6 +193,16 @@ class IGM_Academy_Admin {
             'manage_igm_coaches',
             'igm-coaches',
             array( 'IGM_Academy_Coaches', 'display_coaches_page' )
+        );
+
+        // Groups submenu
+        add_submenu_page(
+            'igm-academy',
+            __( 'Groups', 'igm-academy-manager' ),
+            __( 'Groups', 'igm-academy-manager' ),
+            'manage_igm_groups',
+            'igm-groups',
+            array( 'IGM_Academy_Groups', 'display_groups_page' )
         );
 
         // Import submenu

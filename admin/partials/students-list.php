@@ -48,6 +48,8 @@ if ( ! defined( 'ABSPATH' ) ) {
                 _e( 'Student updated successfully.', 'igm-academy-manager' );
             } elseif ( $_GET['message'] === 'deleted' ) {
                 _e( 'Student deleted successfully.', 'igm-academy-manager' );
+            } elseif ( $_GET['message'] === 'restored' ) {
+                _e( 'Student restored successfully.', 'igm-academy-manager' );
             }
             ?>
             <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
@@ -69,12 +71,35 @@ if ( ! defined( 'ABSPATH' ) ) {
         </div>
     <?php endif; ?>
 
+    <!-- Status Tabs -->
+    <?php
+    $current_status = isset( $_GET['status'] ) ? sanitize_text_field( $_GET['status'] ) : 'active';
+    ?>
+    <ul class="nav nav-tabs mb-3">
+        <li class="nav-item">
+            <a class="nav-link <?php echo $current_status === 'active' ? 'active' : ''; ?>"
+               href="<?php echo admin_url( 'admin.php?page=igm-students&status=active' ); ?>">
+                <i class="bi bi-check-circle"></i>
+                <?php _e( 'Active Students', 'igm-academy-manager' ); ?>
+                <span class="badge bg-primary ms-1"><?php echo esc_html( $active_count ); ?></span>
+            </a>
+        </li>
+        <li class="nav-item">
+            <a class="nav-link <?php echo $current_status === 'deleted' ? 'active' : ''; ?>"
+               href="<?php echo admin_url( 'admin.php?page=igm-students&status=deleted' ); ?>">
+                <i class="bi bi-trash"></i>
+                <?php _e( 'Deleted Students', 'igm-academy-manager' ); ?>
+                <span class="badge bg-secondary ms-1"><?php echo esc_html( $deleted_count ); ?></span>
+            </a>
+        </li>
+    </ul>
+
     <!-- Students Table Card -->
     <div class="mw-100 card">
         <div class="card-header bg-white d-flex justify-content-between align-items-center">
             <h5 class="mb-0">
                 <i class="bi bi-table"></i>
-                <?php _e( 'All Students', 'igm-academy-manager' ); ?>
+                <?php echo $current_status === 'deleted' ? _e( 'Deleted Students', 'igm-academy-manager' ) : _e( 'Active Students', 'igm-academy-manager' ); ?>
             </h5>
             <?php if ( ! empty( $students ) ) : ?>
                 <span class="badge bg-primary"><?php echo esc_html( $total_students ); ?></span>
@@ -154,25 +179,40 @@ if ( ! defined( 'ABSPATH' ) ) {
                                         </span>
                                     </td>
                                     <td class="table-actions text-center">
-                                        <a href="<?php echo admin_url( 'admin.php?page=igm-students&action=edit&student_id=' . $student->id ); ?>"
-                                           class="btn btn-sm btn-primary"
-                                           data-bs-toggle="tooltip"
-                                           title="<?php esc_attr_e( 'Edit Student', 'igm-academy-manager' ); ?>">
-                                            <i class="bi bi-pencil-fill"></i>
-                                            <?php _e( 'Edit', 'igm-academy-manager' ); ?>
-                                        </a>
-                                        <form method="post" style="display: inline;">
-                                            <?php wp_nonce_field( 'igm_student_action', 'igm_student_nonce' ); ?>
-                                            <input type="hidden" name="igm_action" value="delete">
-                                            <input type="hidden" name="student_id" value="<?php echo esc_attr( $student->id ); ?>">
-                                            <button type="submit"
-                                                    class="btn btn-sm btn-danger delete-confirm"
-                                                    data-bs-toggle="tooltip"
-                                                    title="<?php esc_attr_e( 'Delete Student', 'igm-academy-manager' ); ?>">
-                                                <i class="bi bi-trash-fill"></i>
-                                                <?php _e( 'Delete', 'igm-academy-manager' ); ?>
-                                            </button>
-                                        </form>
+                                        <?php if ( $current_status === 'active' ) : ?>
+                                            <a href="<?php echo admin_url( 'admin.php?page=igm-students&action=edit&student_id=' . $student->id ); ?>"
+                                               class="btn btn-sm btn-primary"
+                                               data-bs-toggle="tooltip"
+                                               title="<?php esc_attr_e( 'Edit Student', 'igm-academy-manager' ); ?>">
+                                                <i class="bi bi-pencil-fill"></i>
+                                                <?php _e( 'Edit', 'igm-academy-manager' ); ?>
+                                            </a>
+                                            <form method="post" style="display: inline;">
+                                                <?php wp_nonce_field( 'igm_student_action', 'igm_student_nonce' ); ?>
+                                                <input type="hidden" name="igm_action" value="delete">
+                                                <input type="hidden" name="student_id" value="<?php echo esc_attr( $student->id ); ?>">
+                                                <button type="submit"
+                                                        class="btn btn-sm btn-danger delete-confirm"
+                                                        data-bs-toggle="tooltip"
+                                                        title="<?php esc_attr_e( 'Delete Student', 'igm-academy-manager' ); ?>">
+                                                    <i class="bi bi-trash-fill"></i>
+                                                    <?php _e( 'Delete', 'igm-academy-manager' ); ?>
+                                                </button>
+                                            </form>
+                                        <?php else : ?>
+                                            <form method="post" style="display: inline;">
+                                                <?php wp_nonce_field( 'igm_student_action', 'igm_student_nonce' ); ?>
+                                                <input type="hidden" name="igm_action" value="restore">
+                                                <input type="hidden" name="student_id" value="<?php echo esc_attr( $student->id ); ?>">
+                                                <button type="submit"
+                                                        class="btn btn-sm btn-success"
+                                                        data-bs-toggle="tooltip"
+                                                        title="<?php esc_attr_e( 'Restore Student', 'igm-academy-manager' ); ?>">
+                                                    <i class="bi bi-arrow-counterclockwise"></i>
+                                                    <?php _e( 'Restore', 'igm-academy-manager' ); ?>
+                                                </button>
+                                            </form>
+                                        <?php endif; ?>
                                     </td>
                                 </tr>
                             <?php endforeach; ?>

@@ -17,7 +17,10 @@ class IGM_Academy_Activator {
      */
     public static function activate() {
         self::create_tables();
-        self::create_roles();
+
+        // Use the new capabilities manager
+        require_once IGM_ACADEMY_PLUGIN_DIR . 'includes/class-capabilities.php';
+        IGM_Academy_Capabilities::add_roles_and_caps();
 
         // Set plugin version
         update_option( 'igm_academy_version', IGM_ACADEMY_VERSION );
@@ -51,11 +54,14 @@ class IGM_Academy_Activator {
             notes text DEFAULT NULL,
             total_classes int(11) DEFAULT 0,
             pending_classes int(11) DEFAULT 0,
+            status enum('active','inactive','deleted') DEFAULT 'active',
+            deleted_at datetime DEFAULT NULL,
             created_at datetime DEFAULT CURRENT_TIMESTAMP,
             updated_at datetime DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
             PRIMARY KEY  (id),
             UNIQUE KEY user_id (user_id),
-            UNIQUE KEY email (email)
+            UNIQUE KEY email (email),
+            KEY status (status)
         ) $charset_collate;";
         dbDelta( $sql_students );
 
@@ -69,11 +75,14 @@ class IGM_Academy_Activator {
             email varchar(100) NOT NULL,
             phone varchar(20) DEFAULT NULL,
             specialty enum('tennis','padel','both') DEFAULT 'both',
+            status enum('active','inactive','deleted') DEFAULT 'active',
+            deleted_at datetime DEFAULT NULL,
             created_at datetime DEFAULT CURRENT_TIMESTAMP,
             updated_at datetime DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
             PRIMARY KEY  (id),
             UNIQUE KEY user_id (user_id),
-            UNIQUE KEY email (email)
+            UNIQUE KEY email (email),
+            KEY status (status)
         ) $charset_collate;";
         dbDelta( $sql_coaches );
 
@@ -202,53 +211,4 @@ class IGM_Academy_Activator {
         dbDelta( $sql_payments );
     }
 
-    /**
-     * Create custom user roles
-     *
-     * @since    1.0.0
-     */
-    private static function create_roles() {
-        // Coach role
-        add_role(
-            'igm_coach',
-            __( 'Coach', 'igm-academy-manager' ),
-            array(
-                'read'                   => true,
-                'edit_posts'             => false,
-                'delete_posts'           => false,
-                'manage_igm_groups'      => true,
-                'manage_igm_sessions'    => true,
-                'manage_igm_attendance'  => true,
-                'view_igm_students'      => true,
-                'manage_igm_payments'    => true,
-            )
-        );
-
-        // Student role
-        add_role(
-            'igm_student',
-            __( 'Student', 'igm-academy-manager' ),
-            array(
-                'read'                   => true,
-                'edit_posts'             => false,
-                'delete_posts'           => false,
-                'view_own_schedule'      => true,
-                'view_own_payments'      => true,
-                'view_own_attendance'    => true,
-            )
-        );
-
-        // Add capabilities to administrator
-        $admin_role = get_role( 'administrator' );
-        if ( $admin_role ) {
-            $admin_role->add_cap( 'manage_igm_students' );
-            $admin_role->add_cap( 'manage_igm_coaches' );
-            $admin_role->add_cap( 'manage_igm_groups' );
-            $admin_role->add_cap( 'manage_igm_sessions' );
-            $admin_role->add_cap( 'manage_igm_attendance' );
-            $admin_role->add_cap( 'manage_igm_payments' );
-            $admin_role->add_cap( 'manage_igm_exercises' );
-            $admin_role->add_cap( 'import_igm_data' );
-        }
-    }
 }

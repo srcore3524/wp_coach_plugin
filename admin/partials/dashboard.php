@@ -7,17 +7,18 @@
  * @version    1.0.0
  */
 
-// Get statistics
+// Get statistics (active records only)
 global $wpdb;
-$total_students = $wpdb->get_var( "SELECT COUNT(*) FROM {$wpdb->prefix}igm_students" );
-$total_coaches = $wpdb->get_var( "SELECT COUNT(*) FROM {$wpdb->prefix}igm_coaches" );
+$total_students = $wpdb->get_var( "SELECT COUNT(*) FROM {$wpdb->prefix}igm_students WHERE status = 'active'" );
+$total_coaches = $wpdb->get_var( "SELECT COUNT(*) FROM {$wpdb->prefix}igm_coaches WHERE status = 'active'" );
 $total_groups = $wpdb->get_var( "SELECT COUNT(*) FROM {$wpdb->prefix}igm_groups" );
 $total_payments = $wpdb->get_var( "SELECT COUNT(*) FROM {$wpdb->prefix}igm_payments" );
 
-// Get recent students (last 5)
+// Get recent students (last 5 active)
 $recent_students = $wpdb->get_results(
     "SELECT first_name, last_name, email, created_at
     FROM {$wpdb->prefix}igm_students
+    WHERE status = 'active'
     ORDER BY created_at DESC
     LIMIT 5"
 );

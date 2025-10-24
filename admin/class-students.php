@@ -59,6 +59,14 @@ class IGM_Academy_Students {
                     return true;
                 }
                 break;
+
+            case 'restore':
+                if ( isset( $_POST['student_id'] ) ) {
+                    self::restore_student( intval( $_POST['student_id'] ) );
+                    self::redirect_with_success( 'restored' );
+                    return true;
+                }
+                break;
         }
 
         return false;
@@ -102,8 +110,13 @@ class IGM_Academy_Students {
     private static function display_students_list() {
         global $wpdb;
 
-        $students = self::get_students_with_search();
+        $status_filter = isset( $_GET['status'] ) ? sanitize_text_field( $_GET['status'] ) : 'active';
+        $students = self::get_students_with_search( $status_filter );
         $total_students = count( $students );
+
+        // Get counts for tabs
+        $active_count = $wpdb->get_var( "SELECT COUNT(*) FROM {$wpdb->prefix}igm_students WHERE status = 'active'" );
+        $deleted_count = $wpdb->get_var( "SELECT COUNT(*) FROM {$wpdb->prefix}igm_students WHERE status = 'deleted'" );
 
         require_once IGM_ACADEMY_PLUGIN_DIR . 'admin/partials/students-list.php';
     }
@@ -112,9 +125,10 @@ class IGM_Academy_Students {
      * Get students with optional search filtering
      *
      * @since    1.0.0
-     * @return   array    Array of student objects
+     * @param    string    $status    Status filter ('active' or 'deleted')
+     * @return   array     Array of student objects
      */
-    private static function get_students_with_search() {
+    private static function get_students_with_search( $status = 'active' ) {
         global $wpdb;
 
         $search = isset( $_GET['s'] ) ? sanitize_text_field( $_GET['s'] ) : '';
@@ -125,19 +139,24 @@ class IGM_Academy_Students {
 
             return $wpdb->get_results( $wpdb->prepare(
                 "SELECT * FROM {$table}
-                WHERE first_name LIKE %s
+                WHERE status = %s
+                  AND (first_name LIKE %s
                    OR last_name LIKE %s
-                   OR email LIKE %s
+                   OR email LIKE %s)
                 ORDER BY last_name, first_name",
+                $status,
                 $search_term,
                 $search_term,
                 $search_term
             ) );
         }
 
-        return $wpdb->get_results(
-            "SELECT * FROM {$table} ORDER BY last_name, first_name"
-        );
+        return $wpdb->get_results( $wpdb->prepare(
+            "SELECT * FROM {$table}
+             WHERE status = %s
+             ORDER BY last_name, first_name",
+            $status
+        ) );
     }
 
     /**
@@ -289,13 +308,15 @@ class IGM_Academy_Students {
 
         if ( $student_id > 0 ) {
             $existing = $wpdb->get_var( $wpdb->prepare(
-                "SELECT id FROM {$wpdb->prefix}igm_students WHERE email = %s AND id != %d",
+                "SELECT id FROM {$wpdb->prefix}igm_students
+                 WHERE email = %s AND id != %d AND status != 'deleted'",
                 $email,
                 $student_id
             ) );
         } else {
             $existing = $wpdb->get_var( $wpdb->prepare(
-                "SELECT id FROM {$wpdb->prefix}igm_students WHERE email = %s",
+                "SELECT id FROM {$wpdb->prefix}igm_students
+                 WHERE email = %s AND status != 'deleted'",
                 $email
             ) );
         }
@@ -449,7 +470,7 @@ class IGM_Academy_Students {
     }
 
     /**
-     * Delete student and associated WordPress user
+     * Soft delete student (mark as deleted, keep data for returning students)
      *
      * @since    1.0.0
      * @param    int    $student_id    Student ID to delete
@@ -463,44 +484,99 @@ class IGM_Academy_Students {
             return;
         }
 
-        // Delete WordPress user first
-        if ( $student->user_id ) {
-            self::delete_wordpress_user( $student->user_id );
-        }
+        // Soft delete: Update status instead of physical deletion
+        self::soft_delete_student( $student_id );
 
-        // Delete student record
-        self::delete_student_record( $student_id );
+        // Disable WordPress user (remove role but keep account)
+        if ( $student->user_id ) {
+            self::disable_wordpress_user( $student->user_id );
+        }
 
         self::redirect_with_success( 'deleted' );
     }
 
     /**
-     * Delete WordPress user
+     * Soft delete student record (mark as deleted)
+     *
+     * @since    1.0.0
+     * @param    int    $student_id    Student ID
+     * @return   bool   True on success, false on failure
+     */
+    private static function soft_delete_student( $student_id ) {
+        global $wpdb;
+
+        $result = $wpdb->update(
+            $wpdb->prefix . 'igm_students',
+            [
+                'status'     => 'deleted',
+                'deleted_at' => current_time( 'mysql' )
+            ],
+            [ 'id' => $student_id ],
+            [ '%s', '%s' ],
+            [ '%d' ]
+        );
+
+        return $result !== false;
+    }
+
+    /**
+     * Disable WordPress user (remove role, keep account for potential return)
      *
      * @since    1.0.0
      * @param    int    $user_id    WordPress user ID
      * @return   void
      */
-    private static function delete_wordpress_user( $user_id ) {
-        require_once ABSPATH . 'wp-admin/includes/user.php';
-        wp_delete_user( $user_id );
+    private static function disable_wordpress_user( $user_id ) {
+        $user = new WP_User( $user_id );
+
+        // Remove igm_student role but keep the user account
+        $user->remove_role( 'igm_student' );
+
+        // Optionally add a "suspended" role or metadata
+        update_user_meta( $user_id, 'igm_account_suspended', true );
+        update_user_meta( $user_id, 'igm_suspended_at', current_time( 'mysql' ) );
     }
 
     /**
-     * Delete student record from database
+     * Restore deleted student (reactivate)
      *
      * @since    1.0.0
-     * @param    int    $student_id    Student ID
+     * @param    int    $student_id    Student ID to restore
      * @return   void
      */
-    private static function delete_student_record( $student_id ) {
+    private static function restore_student( $student_id ) {
         global $wpdb;
 
-        $wpdb->delete(
+        // Get student info
+        $student = $wpdb->get_row( $wpdb->prepare(
+            "SELECT * FROM {$wpdb->prefix}igm_students WHERE id = %d",
+            $student_id
+        ) );
+
+        if ( ! $student ) {
+            return;
+        }
+
+        // Restore student status
+        $wpdb->update(
             $wpdb->prefix . 'igm_students',
+            [
+                'status'     => 'active',
+                'deleted_at' => null
+            ],
             [ 'id' => $student_id ],
+            [ '%s', '%s' ],
             [ '%d' ]
         );
+
+        // Restore WordPress user role
+        if ( $student->user_id ) {
+            $user = new WP_User( $student->user_id );
+            $user->add_role( 'igm_student' );
+
+            delete_user_meta( $student->user_id, 'igm_account_suspended' );
+            delete_user_meta( $student->user_id, 'igm_suspended_at' );
+        }
     }
 }
 
